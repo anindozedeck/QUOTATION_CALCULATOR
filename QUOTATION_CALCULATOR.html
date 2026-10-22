@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quotation Calculator</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 32px;
+      background: #f4f1ea;
+      color: #20241f;
+      font-family: Georgia, serif;
+    }
+
+    main {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 28px;
+      background: #fffdf8;
+      border: 1px solid #d8d0c1;
+      border-radius: 8px;
+      box-shadow: 0 12px 30px rgba(64, 52, 35, 0.1);
+    }
+
+    h1 {
+      margin-top: 0;
+      color: #315c4c;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      font-weight: bold;
+    }
+
+    .wide {
+      grid-column: 1 / -1;
+    }
+
+    input, button {
+      box-sizing: border-box;
+      width: 100%;
+      padding: 11px;
+      border: 1px solid #bdb5a6;
+      border-radius: 5px;
+      font: inherit;
+    }
+
+    button {
+      margin-top: 20px;
+      background: #315c4c;
+      color: white;
+      border: 0;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background: #244638;
+    }
+
+    #results {
+      margin-top: 24px;
+    }
+
+    .quote {
+      padding: 16px;
+      margin-top: 12px;
+      border-left: 4px solid #d47d3f;
+      background: #f8f2e7;
+    }
+
+    .quote p {
+      margin: 7px 0;
+    }
+
+    .total {
+      color: #315c4c;
+      font-size: 1.15rem;
+      font-weight: bold;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 16px;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .wide {
+        grid-column: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Quotation Calculator</h1>
+
+    <form id="quoteForm">
+      <div class="form-grid">
+        <label class="wide">
+          Job type
+          <input id="jobType" type="text" placeholder="e.g. Steel door installation" required>
+        </label>
+
+        <label>
+          Material cost (KES)
+          <input id="materialCost" type="number" min="0" step="0.01" required>
+        </label>
+
+        <label>
+          Labour days
+          <input id="labourDays" type="number" min="0" step="0.5" required>
+        </label>
+
+        <label>
+          Daily labour rate (KES)
+          <input id="dailyRate" type="number" min="0" step="0.01" required>
+        </label>
+      </div>
+
+      <button type="submit">Calculate quotation</button>
+    </form>
+
+    <section id="results" aria-live="polite"></section>
+  </main>
+
+  <script>
+    function buildQuote(jobType, materialCost, labourDays, dailyRate) {
+      const labourCost = labourDays * dailyRate;
+      const subtotal = materialCost + labourCost;
+      const vat = subtotal * 0.16;
+      const total = subtotal + vat;
+
+      return {
+        job: jobType,
+        materials: materialCost,
+        labour: labourCost,
+        vat: Math.round(vat),
+        total: Math.round(total)
+      };
+    }
+
+    function formatKes(amount) {
+      return `KES ${amount.toLocaleString()}`;
+    }
+
+    const quoteForm = document.querySelector("#quoteForm");
+    const jobTypeInput = document.querySelector("#jobType");
+    const results = document.querySelector("#results");
+
+    quoteForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+
+      const jobType = jobTypeInput.value.trim();
+      if (!jobType) {
+        jobTypeInput.setCustomValidity("Enter a job type.");
+        jobTypeInput.reportValidity();
+        return;
+      }
+      jobTypeInput.setCustomValidity("");
+
+      const quote = buildQuote(
+        jobType,
+        Number(document.querySelector("#materialCost").value),
+        Number(document.querySelector("#labourDays").value),
+        Number(document.querySelector("#dailyRate").value)
+      );
+
+      const quoteElement = document.createElement("div");
+      quoteElement.className = "quote";
+
+      const heading = document.createElement("h2");
+      heading.textContent = quote.job;
+      quoteElement.append(heading);
+
+      [
+        ["Materials", quote.materials],
+        ["Labour", quote.labour],
+        ["VAT (16%)", quote.vat],
+        ["Total", quote.total]
+      ].forEach(([label, amount], index) => {
+        const line = document.createElement("p");
+        line.textContent = `${label}: ${formatKes(amount)}`;
+        if (index === 3) {
+          line.className = "total";
+        }
+        quoteElement.append(line);
+      });
+
+      results.replaceChildren(quoteElement);
+    });
+
+    jobTypeInput.addEventListener("input", () => {
+      jobTypeInput.setCustomValidity("");
+    });
+  </script>
+</body>
+</html>
